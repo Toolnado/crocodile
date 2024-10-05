@@ -31,7 +31,7 @@ import (
 
 func main() {
     // Create a new cache instance with a memory limit of 64MB
-    cache := crocodile.NewCache(64 * 1024 * 1024)
+    cache := crocodile.New(64 * 1024 * 1024)
 
     // Set a value in the cache
     cache.Set("key", "value")
@@ -52,7 +52,7 @@ You can configure the memory limit when creating a new cache instance:
 
 ```go
 // Create a new cache instance with a memory limit of 128MB
-cache := crocodile.NewCache(128 * 1024 * 1024)
+cache := crocodile.New(128 * 1024 * 1024)
 ```
 
 ## Contributing
@@ -62,4 +62,3 @@ Contributions are welcome! Please fork the repository and submit a pull request 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-```
