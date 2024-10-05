@@ -60,7 +60,6 @@ func (c *Cache) Set(key string, value any) {
 	newSize := oldSize - oldValueSize + newValueSize
 	newItem := NewCacheItem(value, newValueSize)
 	space := newSize - oldSize
-
 	if newSize > c.Limit {
 		c.Eviction(key, space)
 	}
@@ -80,4 +79,56 @@ func (c *Cache) Get(key string) (any, bool) {
 	return item, ok
 }
 
-func (c *Cache) Eviction(usedItemKey string, space int64) {}
+// {key, usedCounter, size}
+type evictionItem struct {
+	name string
+	used int64
+	size int64
+}
+
+func (c *Cache) Eviction(usedItemKey string, space int64) {
+	list := c.itemList(usedItemKey)
+	evicted := c.evictionList(list, space)
+	c.eviction(evicted)
+}
+
+func (c *Cache) itemList(immunity string) []evictionItem {
+	stack := []evictionItem{}
+	c.mutex.RLock()
+	for key, value := range c.data {
+		if key != immunity {
+			stack = append(stack,
+				evictionItem{
+					name: key,
+					used: value.Used(),
+					size: value.Size,
+				},
+			)
+			prev := len(stack) - 2
+			current := len(stack) - 1
+			if len(stack) > 1 && stack[prev].used < stack[current].used {
+				stack[prev], stack[current] = stack[current], stack[prev]
+			}
+		}
+	}
+	c.mutex.Unlock()
+	return stack
+}
+func (c *Cache) evictionList(list []evictionItem, space int64) []string {
+	var evictionSize int64
+	eviction := []string{}
+	for i := len(list) - 1; i >= 0; i-- {
+		if evictionSize < space {
+			eviction = append(eviction, list[i].name)
+			evictionSize += list[i].size
+		}
+	}
+	return eviction
+}
+func (c *Cache) eviction(evicted []string) {
+	c.mutex.Lock()
+	for _, key := range evicted {
+		delete(c.data, key)
+	}
+	c.mutex.Unlock()
+}
