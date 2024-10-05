@@ -62,12 +62,11 @@ func (c *Cache) Set(key string, value any) {
 	space := newSize - oldSize
 
 	if newSize > c.Limit {
-		c.Eviction(oldItem, newItem, space)
-	} else {
-		c.mutex.Lock()
-		c.data[key] = newItem
-		c.mutex.Unlock()
+		c.Eviction(key, space)
 	}
+	c.mutex.Lock()
+	c.data[key] = newItem
+	c.mutex.Unlock()
 	c.Size.Store(newSize)
 }
 
@@ -81,4 +80,4 @@ func (c *Cache) Get(key string) (any, bool) {
 	return item, ok
 }
 
-func (c *Cache) Eviction(oldItem, newItem *CacheItem, space int64) {}
+func (c *Cache) Eviction(usedItemKey string, space int64) {}
