@@ -146,10 +146,10 @@ func (c *Cache) evictionList(list []evictionItem, space int64) []string {
 	return eviction
 }
 func (c *Cache) eviction(evicted []string) {
-	c.mutex.Lock()
 	for _, key := range evicted {
+		c.mutex.Lock()
 		delete(c.data, key)
+		c.mutex.Unlock()
 		c.Len.Add(-1)
 	}
-	c.mutex.Unlock()
 }
