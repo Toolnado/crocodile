@@ -75,6 +75,7 @@ func (c *Cache) Get(key string) (any, bool) {
 	c.mutex.RLock()
 	item, ok := c.data[key]
 	c.mutex.RUnlock()
+	item.Use()
 	return item, ok
 }
 
