@@ -22,14 +22,18 @@ type Memorizer interface {
 	Set(key string, value any)
 	// Get the value of an item from the cache by key
 	Get(key string) (any, bool)
+	// Returns the number of items in the cache
+	Len() int64
 	// Free the specified amount of memory in the cache
 	Eviction(immunity string, space int64)
+	// Memorizer implement the eviction interface (bailiff)
+	bailiff
 }
 
 type Cache struct {
 	Limit int64
-	Size  atomic.Int64
-	Len   atomic.Int64
+	size  atomic.Int64
+	len   atomic.Int64
 	data  map[string]*CacheItem
 	mutex *sync.RWMutex
 }
@@ -58,24 +62,27 @@ func NewCacheItem(value any, size int64) *CacheItem {
 func New(limit int64) *Cache {
 	return &Cache{
 		Limit: limit,
-		Size:  atomic.Int64{},
-		Len:   atomic.Int64{},
+		size:  atomic.Int64{},
+		len:   atomic.Int64{},
 		mutex: &sync.RWMutex{},
 		data:  map[string]*CacheItem{},
 	}
+}
+func (c *Cache) Len() int64 {
+	return c.len.Load()
 }
 
 func (c *Cache) Set(key string, value any) {
 	var oldValueSize int64
 	newValueSize := int64(unsafe.Sizeof(value))
-	oldSize := c.Size.Load()
+	oldSize := c.size.Load()
 	c.mutex.RLock()
 	oldItem, ok := c.data[key]
 	c.mutex.RUnlock()
 	if ok {
 		oldValueSize = oldItem.Size
 	} else {
-		c.Len.Add(1)
+		c.len.Add(1)
 	}
 	newSize := oldSize - oldValueSize + newValueSize
 	newItem := NewCacheItem(value, newValueSize)
@@ -86,7 +93,7 @@ func (c *Cache) Set(key string, value any) {
 	c.mutex.Lock()
 	c.data[key] = newItem
 	c.mutex.Unlock()
-	c.Size.Store(newSize)
+	c.size.Store(newSize)
 }
 
 func (c *Cache) Get(key string) (any, bool) {
@@ -134,6 +141,7 @@ func (c *Cache) itemList(immunity string) []evictionItem {
 	c.mutex.Unlock()
 	return stack
 }
+
 func (c *Cache) evictionList(list []evictionItem, space int64) []string {
 	var evictionSize int64
 	eviction := []string{}
@@ -145,11 +153,12 @@ func (c *Cache) evictionList(list []evictionItem, space int64) []string {
 	}
 	return eviction
 }
+
 func (c *Cache) eviction(evicted []string) {
 	for _, key := range evicted {
 		c.mutex.Lock()
 		delete(c.data, key)
 		c.mutex.Unlock()
-		c.Len.Add(-1)
+		c.len.Add(-1)
 	}
 }
