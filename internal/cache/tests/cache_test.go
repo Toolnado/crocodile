@@ -13,8 +13,7 @@ var _ cache.Memorizer = cache.New(0)
 func TestNewCache(t *testing.T) {
 	instance := cache.New(TestSizeBig)
 	t.Logf("\ncache: %-v\n", instance)
-	limit := instance.Limit
-	if limit != TestSizeBig {
-		t.Error("invalid cache size:", limit)
+	if instance.Limit != TestSizeBig {
+		t.Error("invalid cache size:", instance.Limit)
 	}
 }
