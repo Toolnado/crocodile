@@ -6,6 +6,26 @@ import (
 	"unsafe"
 )
 
+// Eviction interface
+type bailiff interface {
+	// Returns a list of items in order of eviction
+	itemList(immunity string) []evictionItem
+	// Returns a list of items that will be evicted
+	evictionList(list []evictionItem, space int64) []string
+	// Evicts the specified items
+	eviction(evicted []string)
+}
+
+// Cache interface
+type Memorizer interface {
+	// Add an item to the cache or update a value in the cache by key
+	Set(key string, value any)
+	// Get the value of an item from the cache by key
+	Get(key string) (any, bool)
+	// Free the specified amount of memory in the cache
+	Eviction(immunity string, space int64)
+}
+
 type Cache struct {
 	Limit int64
 	Size  atomic.Int64
@@ -86,8 +106,8 @@ type evictionItem struct {
 	size int64
 }
 
-func (c *Cache) Eviction(usedItemKey string, space int64) {
-	list := c.itemList(usedItemKey)
+func (c *Cache) Eviction(immunity string, space int64) {
+	list := c.itemList(immunity)
 	evicted := c.evictionList(list, space)
 	c.eviction(evicted)
 }
@@ -129,6 +149,7 @@ func (c *Cache) eviction(evicted []string) {
 	c.mutex.Lock()
 	for _, key := range evicted {
 		delete(c.data, key)
+		c.Len.Add(-1)
 	}
 	c.mutex.Unlock()
 }
