@@ -1,4 +1,3 @@
-```markdown
 # Crocodile
 
 **Crocodile** is an in-memory cache written in Go, designed to offer a lightweight and efficient caching solution. Its key feature is the ability to set a memory consumption limit per instance, ensuring optimal resource usage and preventing overconsumption.
@@ -14,7 +13,7 @@
 
 To install Crocodile, use `go get`:
 
-```
+```bash
 go get github.com/yourusername/crocodile
 ```
 
@@ -63,3 +62,4 @@ Contributions are welcome! Please fork the repository and submit a pull request 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+```
