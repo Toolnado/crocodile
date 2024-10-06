@@ -138,7 +138,7 @@ func (c *Cache) itemList(immunity string) []evictionItem {
 			}
 		}
 	}
-	c.mutex.Unlock()
+	c.mutex.RUnlock()
 	return stack
 }
 
