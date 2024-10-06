@@ -3,7 +3,6 @@ package cache
 import (
 	"sync"
 	"sync/atomic"
-	"unsafe"
 )
 
 // Eviction interface
@@ -19,15 +18,19 @@ type bailiff interface {
 // Cache interface
 type Memorizer interface {
 	// Add an item to the cache or update a value in the cache by key
-	Set(key string, value any)
+	Set(key string, value []byte)
 	// Get the value of an item from the cache by key
-	Get(key string) (any, bool)
+	Get(key string) ([]byte, bool)
 	// Returns the number of items in the cache
 	Len() int64
 	// Free the specified amount of memory in the cache
 	Eviction(immunity string, space int64)
 	// Memorizer implement the eviction interface (bailiff)
 	bailiff
+}
+
+func NewCache(limit int64) Memorizer {
+	return New(limit)
 }
 
 type Cache struct {
@@ -41,7 +44,7 @@ type Cache struct {
 type CacheItem struct {
 	UsedCount atomic.Int64
 	Size      int64
-	Value     any
+	Value     []byte
 }
 
 func (ci *CacheItem) Use() {
@@ -51,10 +54,10 @@ func (ci *CacheItem) Used() int64 {
 	return ci.UsedCount.Load()
 }
 
-func NewCacheItem(value any, size int64) *CacheItem {
+func NewCacheItem(value []byte) *CacheItem {
 	return &CacheItem{
 		UsedCount: atomic.Int64{},
-		Size:      size,
+		Size:      int64(len(value)),
 		Value:     value,
 	}
 }
@@ -72,9 +75,9 @@ func (c *Cache) Len() int64 {
 	return c.len.Load()
 }
 
-func (c *Cache) Set(key string, value any) {
+func (c *Cache) Set(key string, value []byte) {
 	var oldValueSize int64
-	newValueSize := int64(unsafe.Sizeof(value))
+	newValueSize := int64(len(value))
 	oldSize := c.size.Load()
 	c.mutex.RLock()
 	oldItem, ok := c.data[key]
@@ -85,9 +88,9 @@ func (c *Cache) Set(key string, value any) {
 		c.len.Add(1)
 	}
 	newSize := oldSize - oldValueSize + newValueSize
-	newItem := NewCacheItem(value, newValueSize)
-	space := newSize - oldSize
+	newItem := NewCacheItem(value)
 	if newSize > c.Limit {
+		space := newSize - oldSize
 		c.Eviction(key, space)
 	}
 	c.mutex.Lock()
@@ -96,14 +99,15 @@ func (c *Cache) Set(key string, value any) {
 	c.size.Store(newSize)
 }
 
-func (c *Cache) Get(key string) (any, bool) {
+func (c *Cache) Get(key string) ([]byte, bool) {
 	c.mutex.RLock()
 	item, ok := c.data[key]
 	c.mutex.RUnlock()
 	if ok {
 		item.Use()
+		return item.Value, ok
 	}
-	return item, ok
+	return nil, ok
 }
 
 // {key, usedCounter, size}
