@@ -26,7 +26,7 @@ package main
 
 import (
     "fmt"
-    "github.com/yourusername/crocodile"
+    "github.com/Toolnado/crocodile"
 )
 
 func main() {
