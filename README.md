@@ -34,7 +34,7 @@ func main() {
     cache := crocodile.New(64 * 1024 * 1024)
 
     // Set a value in the cache
-    cache.Set("key", "value")
+    cache.Set("key",[]byte("value"))
 
     // Get a value from the cache
     value, found := cache.Get("key")
