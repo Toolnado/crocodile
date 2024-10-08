@@ -14,7 +14,7 @@
 To install Crocodile, use `go get`:
 
 ```bash
-go get github.com/yourusername/crocodile
+go get github.com/Toolnado/crocodile
 ```
 
 ## Usage
