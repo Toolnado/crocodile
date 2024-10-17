@@ -1,10 +1,11 @@
 package benchmark
 
 import (
-	"crocodile/internal/cache"
 	"fmt"
 	"sync"
 	"testing"
+
+	"github.com/Toolnado/crocodile/cache"
 )
 
 type testData struct {

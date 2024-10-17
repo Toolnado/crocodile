@@ -1,8 +1,9 @@
 package tests
 
 import (
-	"crocodile/internal/cache"
 	"testing"
+
+	"github.com/Toolnado/crocodile/cache"
 )
 
 const TestSizeBig int64 = 1 << 20

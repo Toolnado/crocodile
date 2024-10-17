@@ -1,8 +1,9 @@
 package tests
 
 import (
-	"crocodile/internal/cache"
 	"testing"
+
+	"github.com/Toolnado/crocodile/cache"
 )
 
 func TestNewCacheItem(t *testing.T) {
